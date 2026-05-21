@@ -7,7 +7,7 @@ import pprint
 import io
 
 from os.path import splitext
-from urllib.parse import urlparse
+from urllib.parse import urlsplit
 
 import tldextract
 
@@ -143,9 +143,16 @@ for line in fileinput.input():
         #int(timestamp)
         json_data = json.loads(json_str)
         url = json_data.get('url')
-        parsed_url = urlparse(url)
-    except:
-        break
+        parsed_url = urlsplit(url)
+        if parsed_url.hostname is None:
+            # Handle very rare situations where we have a URL starting with https:////
+            if ":////" in url:
+                url = url.replace(':////', '://', 1)
+                parsed_url = urlsplit(url)
+    except Exception:
+        print("Error\t{}".format(line), file=sys.stderr)
+        continue
+
     
     # A bit of a cache as we work with a surt ordered list of URLs.
     hostname = parsed_url.hostname
@@ -190,7 +197,7 @@ for line in fileinput.input():
     row['url_path'] = parsed_url.path or '-'
     row['url_query'] = parsed_url.query or '-'
     row['fetch_time'] = timestamp
-    row['fetch_status'] = json_data.get('status', '-')
+    row['fetch_status'] = status if str(status := json_data.get('status', '-')).isdigit() else '-'
     row['content_digest'] = json_data.get('digest', '-')
     row['content_mime_type'] = json_data.get('mime', '-')
     row['content_mime_detected'] = json_data.get('mime-detected', '-')

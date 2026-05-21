@@ -62,8 +62,12 @@ duckdb -c "
         FROM read_csv(
 			'/dev/stdin', 
 			delim='\t',
-			ignore_errors=true, 
-			header=True,
+			all_varchar=true,
+			store_rejects=true,
+			ignore_errors=true,
+                        strict_mode=false, 
+			header=true,
+			max_line_size=40971520,
 			columns={
 				'url_surtkey':'VARCHAR',
 				'url':'VARCHAR',
@@ -107,6 +111,8 @@ duckdb -c "
 		COMPRESSION ZSTD,
 		ROW_GROUP_SIZE ${ROW_GROUP_SIZE}
     );
+COPY reject_errors TO 'out.csv' (HEADER, DELIMITER',');
+
 "
 
 echo "Conversion complete: output.parquet created."
