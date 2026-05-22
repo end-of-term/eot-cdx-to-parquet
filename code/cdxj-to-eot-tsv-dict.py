@@ -3,6 +3,7 @@ import csv
 import sys
 import ipaddress
 import io
+import re
 
 from os.path import splitext
 from urllib.parse import urlsplit
@@ -54,6 +55,8 @@ writer.writeheader()
 
 stdout_write = sys.stdout.write
 CHUNK_SIZE = 10000
+
+MULTI_SLASH_REGEX = re.compile(r'^(https?):\/{3,}')
 
 def reverse_hostname(hostname):
     """
@@ -147,7 +150,7 @@ for line in fileinput.input():
         if parsed_url.hostname is None:
             # Handle very rare situations where we have a URL starting with https:////
             if ":////" in url:
-                url = url.replace(':////', '://', 1)
+                url = MULTI_SLASH_REGEX.sub(r'\1://', url, count=1)
                 parsed_url = urlsplit(url)
     except Exception:
         print("Error\t{}".format(line), file=sys.stderr)
