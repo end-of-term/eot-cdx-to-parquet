@@ -149,7 +149,7 @@ for line in fileinput.input():
         parsed_url = urlsplit(url)
         if parsed_url.hostname is None:
             # Handle very rare situations where we have a URL starting with https:////
-            if ":////" in url:
+            if ":///" in url:
                 url = MULTI_SLASH_REGEX.sub(r'\1://', url, count=1)
                 parsed_url = urlsplit(url)
     except Exception:
