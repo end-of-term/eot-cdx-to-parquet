@@ -17,7 +17,7 @@ duckdb -c "
     PRAGMA threads = ${DUCKDB_THREADS};
     PRAGMA memory_limit = '${DUCKDB_MEM}';
     PRAGMA temp_directory = '${DUCKDB_TEMP}';
-	PRAGMA disable_print_progress_bar;
+    PRAGMA disable_print_progress_bar;
 
     -- Preserve your existing LC_ALL=C sorted order in the write path
     SET preserve_insertion_order = true;
@@ -111,8 +111,8 @@ duckdb -c "
 		COMPRESSION ZSTD,
 		ROW_GROUP_SIZE ${ROW_GROUP_SIZE}
     );
-COPY reject_errors TO 'out.csv' (HEADER, DELIMITER',');
 
+COPY reject_errors TO '${DUCKDB_FILENAME}-errors.csv' (HEADER, DELIMITER',');
 "
 
-echo "Conversion complete: output.parquet created."
+echo "Conversion complete: ${DUCKDB_FILENAME} created."

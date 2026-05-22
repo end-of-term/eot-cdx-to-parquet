@@ -1,14 +1,13 @@
 import fileinput
-import orjson as json
 import csv
 import sys
 import ipaddress
-import pprint
 import io
 
 from os.path import splitext
 from urllib.parse import urlsplit
 
+import orjson as json
 import tldextract
 
 fieldnames = [
@@ -53,7 +52,6 @@ buffer = io.StringIO()
 writer = csv.DictWriter(buffer, fieldnames=fieldnames, delimiter='\t', extrasaction='ignore')
 writer.writeheader()
 
-buffer_write = buffer.write
 stdout_write = sys.stdout.write
 CHUNK_SIZE = 10000
 
@@ -65,7 +63,7 @@ def reverse_hostname(hostname):
     if not hostname:
         return None
 
-    if hostname[-1].isalpha:
+    if hostname[-1].isalpha():
         parts = hostname.split('.')
         return ".".join(parts[::-1])
     
@@ -107,26 +105,28 @@ def get_ext(surt):
     _, ext = splitext(path)
     return ext[1:]
 
-
 def get_segment(filename):
-    if not filename:
+    if not filename or '/' not in filename:
         return '-'
-    return filename.split('/')[3]
-
+    parts = filename.split('/')
+    return parts[3] if len(parts) > 3 else '-'
 
 def get_crawl(filename):
-    if not filename:
+    if not filename or '/' not in filename:
         return '-'
-    return filename.split('/')[1]
-
+    parts = filename.split('/')
+    return parts[1] if len(parts) > 1 else '-'
 
 def get_surt_hostname(surt):
     return surt.partition(')')[0]
 
-
 def get_host_canonical(surt_host):
-    return '.'.join(reversed(surt_host.strip(',').split(',')))
+    return '.'.join(surt_host.strip(',').split(',')[::-1])
 
+def get_host_rev_parts(hostname):
+    if not hostname:
+        return []
+    return hostname.split('.')[::-1]
 
 pub_extract = tldextract.TLDExtract()
 priv_extract = tldextract.TLDExtract(include_psl_private_domains=True)
@@ -160,9 +160,9 @@ for line in fileinput.input():
         tld_extract_pub = pub_extract(url)
         tld_extract_pri = priv_extract(url)
         
-        hostname_rev_parts = hostname.split('.')[::-1]
+        hostname_rev_parts = get_host_rev_parts(hostname)
         
-        tld_extract_dict['url_host_tld'] = tld_extract_pub.suffix or '-'
+        tld_extract_dict['url_host_tld'] = get_domain_part(hostname_rev_parts, 1)
         tld_extract_dict['url_host_registry_suffix'] = tld_extract_pub.suffix or '-'
         tld_extract_dict['url_host_registered_domain'] = tld_extract_pub.top_domain_under_public_suffix or '-'
         tld_extract_dict['url_host_private_suffix'] = tld_extract_pri.suffix or '-'
